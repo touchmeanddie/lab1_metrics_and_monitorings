@@ -17,7 +17,7 @@ async def create_order(pool: Pool,
 
     await channel.default_exchange.publish(
         aio_pika.Message(
-            body=json.dumps({"order_id": order["id"]}).encode(),
+            body=json.dumps({"order_id": order["order_id"]}).encode(),
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         ),
         routing_key=settings.rabbitmq_queue,

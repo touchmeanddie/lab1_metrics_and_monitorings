@@ -8,7 +8,7 @@ class OrderCreate(BaseModel):
 
 
 class OrderResponse(BaseModel):
-    id: int
+    order_id: int
     amount: float
     items_count: int
     status: str
