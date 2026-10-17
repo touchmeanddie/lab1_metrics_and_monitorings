@@ -1,4 +1,5 @@
 import aio_pika
+import structlog
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -7,6 +8,8 @@ from fastapi.responses import PlainTextResponse
 
 from app.core.config import settings
 from app.core.middleware import MetricsMiddleware
+from app.core.logging_config import setup_logging
+from app.core.request_context import RequestIdMiddleware
 from app.database.database import ORDERS_DDL
 from app.database.session import init_pool, close_pool
 from app.orders.router import router as orders_router
@@ -36,7 +39,12 @@ async def lifespan(app: FastAPI):
     await connection.close()
     await close_pool()
 
+
+setup_logging()
+structlog.contextvars.bind_contextvars(service="api")
+
 app = FastAPI(title="Заказики", lifespan=lifespan)
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(MetricsMiddleware)
 
 app.include_router(orders_router)

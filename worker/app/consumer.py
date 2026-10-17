@@ -1,14 +1,14 @@
 import asyncio
 import json
-import logging
 import aio_pika
+import structlog
 
 from asyncpg import Pool
 
 from app.config import settings
 from app.processor import process_order
 
-logger = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 async def _consume_once(pool: Pool) -> None:
@@ -22,7 +22,7 @@ async def _consume_once(pool: Pool) -> None:
     await channel.set_qos(prefetch_count=1)
 
     queue = await channel.declare_queue(settings.rabbitmq_queue, durable=True)
-    logger.info("Worker started, listen queue '%s'", settings.rabbitmq_queue)
+    log.info("Worker started, listen queue '%s'", settings.rabbitmq_queue)
 
     try:
         async with queue.iterator(timeout=None) as it:
@@ -30,13 +30,23 @@ async def _consume_once(pool: Pool) -> None:
                 async with message.process():
                     data = json.loads(message.body.decode())
                     order_id = data.get("order_id")
+                    request_id = data.get("request_id", "unknown")
 
                     if order_id is None:
-                        logger.error("No field 'order_id': %s", data)
+                        log.error("No field 'order_id': %s", data)
                         continue
+
+                    structlog.contextvars.clear_contextvars()
+                    structlog.contextvars.bind_contextvars(
+                        request_id=request_id, service="worker"
+                    )
+
+                    log.info("message_received", order_id=order_id,
+                             queue=settings.rabbitmq_queue)
 
                     await process_order(pool, order_id,
                                         settings.processing_delay_ms)
+
     finally:
         await connection.close()
 
@@ -46,5 +56,5 @@ async def consume(pool: Pool) -> None:
         try:
             await _consume_once(pool)
         except Exception:
-            logger.exception("Consumer crashed, restarting in 5 seconds")
+            log.exception("Consumer crashed, restarting in 5 seconds")
             await asyncio.sleep(5)

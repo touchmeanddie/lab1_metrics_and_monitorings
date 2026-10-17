@@ -119,6 +119,45 @@ services:
       - api
     networks: [lab1]
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.8
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    networks: [lab1]
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.4.8
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5044:5044"
+    depends_on: [elasticsearch]
+    networks: [lab1]
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.4.8
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on: [elasticsearch]
+    networks: [lab1]
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:9.4.8
+    user: root
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: ["--strict.perms=false"]
+    depends_on: [logstash]
+    networks: [lab1]
+
 volumes:
   pg_data:
 
