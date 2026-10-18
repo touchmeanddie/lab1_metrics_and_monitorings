@@ -1,5 +1,4 @@
 import aio_pika
-import structlog
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -41,7 +40,6 @@ async def lifespan(app: FastAPI):
 
 
 setup_logging()
-structlog.contextvars.bind_contextvars(service="api")
 
 app = FastAPI(title="Заказики", lifespan=lifespan)
 app.add_middleware(RequestIdMiddleware)

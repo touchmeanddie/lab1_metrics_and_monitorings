@@ -1,6 +1,5 @@
 import asyncio
 import asyncpg
-import structlog
 
 from prometheus_client import start_http_server
 
@@ -8,7 +7,6 @@ from app.config import settings
 from app.consumer import consume
 from app.logging_config import setup_logging
 
-structlog.contextvars.bind_contextvars(service="worker")
 setup_logging()
 
 

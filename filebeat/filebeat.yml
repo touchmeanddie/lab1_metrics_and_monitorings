@@ -1,26 +1,23 @@
-filebeat.autodiscover:
-  providers:
-    - type: docker
-      hints.enabled: true
-      templates:
-        - condition:
-            contains:
-              docker.container.name: "fast_api_project-api-1"
-          config:
-            - type: docker
-              containers.ids: ["${docker.container.id}"]
-              json.keys_under_root: true
-              json.add_error_key: true
-              json.overwrite_keys: true
-        - condition:
-            contains:
-              docker.container.name: "fast_api_project-worker-1"
-          config:
-            - type: docker
-              containers.ids: ["${docker.container.id}"]
-              json.keys_under_root: true
-              json.add_error_key: true
-              json.overwrite_keys: true
+filebeat.inputs:
+  - type: filestream
+    id: api-logs
+    paths:
+      - /app/logs/api.log
+    parsers:
+      - ndjson:
+          target: ""
+          overwrite_keys: true
+          add_error_key: true
+
+  - type: filestream
+    id: worker-logs
+    paths:
+      - /app/logs/worker.log
+    parsers:
+      - ndjson:
+          target: ""
+          overwrite_keys: true
+          add_error_key: true
 
 output.logstash:
   hosts: ["logstash:5044"]

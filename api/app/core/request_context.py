@@ -12,7 +12,14 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
 
         structlog.contextvars.clear_contextvars()
-        structlog.contextvars.bind_contextvars(request_id=request_id)
+        structlog.contextvars.bind_contextvars(request_id=request_id,
+                                               service="api")
+
+        logger.info(
+            "request_started",
+            method=request.method,
+            route=request.url.path,
+        )
 
         start = time.monotonic()
 
