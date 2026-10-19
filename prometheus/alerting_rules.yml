@@ -1,0 +1,29 @@
+groups:
+  - name: lab3-alerts
+    rules:
+      - alert: WorkerSlow
+        expr: histogram_quantile(0.95, sum by (le) (rate(shop_order_processing_duration_seconds_bucket[5m]))) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Worker медленный"
+          description: "p95 обработки заказа больше 5 секунд в течение 2 минут (текущее: {{ $value }}s)"
+
+      - alert: RabbitQueueHigh
+        expr: rabbitmq_queue_messages_ready > 20
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Очередь в RabbitMQ растет"
+          description: "В очереди RabbitMQ больше 20 ожидающих сообщений в течение 2 минут (текущее: {{ $value }})"
+
+      - alert: ApiDown
+        expr: up{job="api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Все упало"
+          description: "Prometheus не может опросить API: up для API равен 0 в течение 1 минуты"

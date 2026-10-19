@@ -57,3 +57,11 @@ scrape_configs:
 
 remote_write:
   - url: http://victoriametrics:8428/api/v1/write
+
+rule_files:
+  - "/etc/prometheus/alerting_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']

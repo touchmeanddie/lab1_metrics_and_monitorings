@@ -36,3 +36,4 @@ pg_data/
 .ruff_cache/
 .coverage
 htmlcov/
+alertmanager/secrets/
